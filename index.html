@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <h1>Prebid.js Sovrn Adapter Test</h1>
+  <h1>Prebid.js Sovrn Adapter Test3</h1>
   <div id="ad-slot">
     <script>
       var adUnits = [{
@@ -29,11 +29,16 @@
       var pbjs = pbjs || {};
       pbjs.que = pbjs.que || [];
 
+      // Set Prebid.js in debug mode for better logging
+  pbjs.logging = true;
+
       pbjs.que.push(function() {
+        console.log('Prebid initialized');
         pbjs.addAdUnits(adUnits);
         pbjs.requestBids({
           bidsBackHandler: function(bidResponses) {
             console.log('Bids:', bidResponses);
+            console.log('Bids received:', bidResponses);
             pbjs.setTargetingForGPTAsync();
             googletag.pubads().refresh();
           }
