@@ -1,0 +1,13 @@
+{
+  "version": "10.9.0",
+  "modules": [
+    "sovrnBidAdapter",
+    "consentManagementGpp",
+    "consentManagementTcf",
+    "gppControl_usnat",
+    "gppControl_usstates",
+    "gptPreAuction",
+    "storageControl",
+    "tcfControl"
+  ]
+}

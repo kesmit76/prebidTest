@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sovrn Prebid Test</title>
+  <script async src="prebid.js"></script>
+  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <style>
+    #ad-slot { width: 300px; height: 250px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Prebid.js Sovrn Adapter Test</h1>
+  <div id="ad-slot">
+    <script>
+      var adUnits = [{
+        code: 'ad-slot',
+        mediaTypes: {
+          banner: { sizes: [[300, 250]] }
+        },
+        bids: [{
+          bidder: 'sovrn',
+          params: {
+            tagid: '1283857'   // 👈 Replace with your Sovrn ID
+          }
+        }]
+      }];
+
+      var pbjs = pbjs || {};
+      pbjs.que = pbjs.que || [];
+
+      pbjs.que.push(function() {
+        pbjs.addAdUnits(adUnits);
+        pbjs.requestBids({
+          bidsBackHandler: function(bidResponses) {
+            console.log('Bids:', bidResponses);
+            pbjs.setTargetingForGPTAsync();
+            googletag.pubads().refresh();
+          }
+        });
+      });
+
+      var googletag = googletag || {};
+      googletag.cmd = googletag.cmd || [];
+      googletag.cmd.push(function() {
+        googletag.defineSlot('/6355419/Travel/Europe/France/Paris', [300, 250], 'ad-slot')
+          .addService(googletag.pubads());
+        googletag.pubads().enableSingleRequest();
+        googletag.enableServices();
+      });
+    </script>
+  </div>
+</body>
+</html>
