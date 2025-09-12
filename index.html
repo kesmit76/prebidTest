@@ -13,7 +13,7 @@
   </style>
 </head>
 <body>
-  <h3>Prebid Sovrn Test (No GAM)2</h3>
+  <h3>Prebid Sovrn Test (No GAM)3</h3>
   <div id="ad-slot"></div>
 
   <script>
@@ -49,20 +49,7 @@
   }
 });
 
-      pbjs.requestBids({
-        bidsBackHandler: function() {
-          var winners = pbjs.getHighestCpmBids('ad-slot');
-          if (winners && winners.length > 0) {
-            var ad = winners[0];
-            console.log("Winning bid:", ad);
-            // Render the ad into the div
-            pbjs.renderAd(document.getElementById('ad-slot'), ad.adId);
-          } else {
-            document.getElementById('ad-slot').innerHTML = "No Sovrn bid returned.";
-          }
-        }
-      });
-    });
+     
   </script>
 </body>
 </html>
