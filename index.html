@@ -2,32 +2,36 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Prebid Sovrn Test Page</title>
+  <title>Standalone Sovrn Prebid Test</title>
   <style>
-    #ad-slot {
-      width: 300px;
-      height: 250px;
-      border: 1px solid #333;
-    }
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    #ad-slot { width: 300px; height: 250px; border: 1px solid #333; }
+    #status { margin-top: 12px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Prebid Sovrn Standalone Test</h1>
-
+  <h1>Standalone Sovrn Prebid Test</h1>
   <div id="ad-slot"></div>
+  <div id="status">Status: idle</div>
 
-  <!-- Prebid.js must include the Sovrn adapter -->
+  <!-- Prebid.js build including Sovrn adapter -->
   <script src="prebid.js"></script>
 
   <script>
     var AD_UNIT_CODE = 'ad-slot';
-    var SOVRN_TAGID = '1290741'; // <-- Replace with your Sovrn tag ID
+    var SOVRN_TAGID = 'YOUR_SOVRN_TAG_ID'; // <-- Replace with your Sovrn placement/tag ID
 
     window.pbjs = window.pbjs || {};
     pbjs.que = pbjs.que || [];
 
+    // Helper to update status
+    function setStatus(msg) {
+      console.log(msg);
+      document.getElementById('status').innerText = 'Status: ' + msg;
+    }
+
     pbjs.que.push(function() {
-      // Define ad unit
+      // Define the ad unit
       var adUnits = [{
         code: AD_UNIT_CODE,
         mediaTypes: {
@@ -40,21 +44,25 @@
       }];
 
       pbjs.addAdUnits(adUnits);
+      setStatus('Ad units added, requesting bids...');
 
-      // Request bids
       pbjs.requestBids({
         timeout: 2000,
         bidsBackHandler: function() {
-          // Get winning bids
+          setStatus('Bids back — checking winner...');
           var winners = pbjs.getHighestCpmBids(AD_UNIT_CODE);
           if (winners && winners.length > 0) {
-            // Render the creative
-            pbjs.renderAd(document.getElementById(AD_UNIT_CODE), winners[0].adId);
-            console.log('Rendered Sovrn creative:', winners[0]);
+            var winner = winners[0];
+            setStatus('Rendering winning bid from ' + winner.bidder + ' @ CPM: ' + winner.cpm);
+            try {
+              pbjs.renderAd(document.getElementById(AD_UNIT_CODE), winner.adId);
+            } catch (e) {
+              console.error('Error rendering ad:', e);
+              setStatus('Error rendering ad — check console');
+            }
           } else {
-            // No bid
-            document.getElementById(AD_UNIT_CODE).innerHTML = '<em>No Sovrn bid returned</em>';
-            console.log('No winning bid found');
+            setStatus('No winning bid returned');
+            document.getElementById(AD_UNIT_CODE).innerHTML = '<em>No Sovrn bid</em>';
           }
         }
       });
