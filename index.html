@@ -2,58 +2,56 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Sovrn Prebid Test</title>
-  <script async src="prebid.js"></script>
-  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <title>Prebid Sovrn Test</title>
+  <script async src="https://acdn.adnxs.com/prebid/not-for-prod/1/prebid.js"></script>
   <style>
-    #ad-slot { width: 300px; height: 250px; border: 1px solid #ccc; }
+    #ad-slot {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #000;
+    }
   </style>
 </head>
 <body>
-  <h1>Prebid.js Sovrn Adapter Test8</h1>
-  <div id="ad-slot">
-    <script>
-      var adUnits = [{
-        code: 'ad-slot',
-        mediaTypes: {
-          banner: { sizes: [[300, 250]] }
-        },
-        bids: [{
-          bidder: 'sovrn',
-          params: {
-            tagid: '1290741'   // 👈 Replace with your Sovrn ID
+  <h3>Prebid Sovrn Test (No GAM)</h3>
+  <div id="ad-slot"></div>
+
+  <script>
+    var adUnits = [{
+      code: 'ad-slot',     // matches your div id
+      mediaTypes: {
+        banner: {
+          sizes: [[300, 250]]  // Sovrn supports common display sizes
+        }
+      },
+      bids: [{
+        bidder: 'sovrn',
+        params: {
+          tagid: '1290741'  // replace with your Sovrn placement ID
+        }
+      }]
+    }];
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+
+    pbjs.que.push(function() {
+      pbjs.addAdUnits(adUnits);
+
+      pbjs.requestBids({
+        bidsBackHandler: function() {
+          var winners = pbjs.getHighestCpmBids('ad-slot');
+          if (winners && winners.length > 0) {
+            var ad = winners[0];
+            console.log("Winning bid:", ad);
+            // Render the ad into the div
+            pbjs.renderAd(document.getElementById('ad-slot'), ad.adId);
+          } else {
+            document.getElementById('ad-slot').innerHTML = "No Sovrn bid returned.";
           }
-        }]
-      }];
-
-      var pbjs = pbjs || {};
-      pbjs.que = pbjs.que || [];
-
-      // Set Prebid.js in debug mode for better logging
-  pbjs.logging = true;
-
-      pbjs.que.push(function() {
-        console.log('Prebid initialized');
-        pbjs.addAdUnits(adUnits);
-        pbjs.requestBids({
-          bidsBackHandler: function(bidResponses) {
-            console.log('Bids:', bidResponses);
-            console.log('Bids received:', bidResponses);
-            pbjs.setTargetingForGPTAsync();
-            googletag.pubads().refresh();
-          }
-        });
+        }
       });
-
-      var googletag = googletag || {};
-      googletag.cmd = googletag.cmd || [];
-      googletag.cmd.push(function() {
-        googletag.defineSlot('/6355419/Travel/Europe/France/Paris', [300, 250], 'ad-slot')
-          .addService(googletag.pubads());
-        googletag.pubads().enableSingleRequest();
-        googletag.enableServices();
-      });
-    </script>
-  </div>
+    });
+  </script>
 </body>
 </html>
