@@ -7,12 +7,14 @@
     body { font-family: Arial, sans-serif; padding: 16px; }
     #ad-slot { width: 300px; height: 250px; border: 1px solid #333; }
     #status { margin-top: 12px; font-weight: bold; }
+    #debug { margin-top: 12px; padding: 8px; background: #f0f0f0; font-size: 12px; max-height: 200px; overflow: auto; }
   </style>
 </head>
 <body>
   <h1>Standalone Sovrn Prebid Test</h1>
   <div id="ad-slot"></div>
   <div id="status">Status: idle</div>
+  <pre id="debug"></pre>
 
   <!-- Prebid.js build including Sovrn adapter -->
   <script src="prebid.js"></script>
@@ -24,10 +26,13 @@
     window.pbjs = window.pbjs || {};
     pbjs.que = pbjs.que || [];
 
-    // Helper to update status
     function setStatus(msg) {
       console.log(msg);
       document.getElementById('status').innerText = 'Status: ' + msg;
+    }
+
+    function debugLog(obj) {
+      document.getElementById('debug').innerText = JSON.stringify(obj, null, 2);
     }
 
     pbjs.que.push(function() {
@@ -54,12 +59,19 @@
           if (winners && winners.length > 0) {
             var winner = winners[0];
             setStatus('Rendering winning bid from ' + winner.bidder + ' @ CPM: ' + winner.cpm);
+            debugLog(winner);
+
+            // Directly inject the ad HTML into the div
+            var adSlot = document.getElementById(AD_UNIT_CODE);
             try {
-              pbjs.renderAd(document.getElementById(AD_UNIT_CODE), winner.adId);
-            } catch (e) {
-              console.error('Error rendering ad:', e);
-              setStatus('Error rendering ad — check console');
+              // Some Sovrn builds use URL-encoded adm
+              var html = winner.adm || winner.ad || '';
+              adSlot.innerHTML = decodeURIComponent(html);
+            } catch(e) {
+              console.warn('Error decoding ad HTML, using raw HTML');
+              adSlot.innerHTML = winner.adm || winner.ad || '<em>Failed to render</em>';
             }
+
           } else {
             setStatus('No winning bid returned');
             document.getElementById(AD_UNIT_CODE).innerHTML = '<em>No Sovrn bid</em>';
