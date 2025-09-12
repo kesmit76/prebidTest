@@ -13,48 +13,45 @@
   </style>
 </head>
 <body>
-  <h3>Prebid Sovrn Test (No GAM) 2</h3>
+  <h3>Prebid Sovrn Test (No GAM)</h3>
   <div id="ad-slot"></div>
 
- <script>
-  var pbjs = pbjs || {};
-  pbjs.que = pbjs.que || [];
-
-  var adUnits = [{
-    code: 'ad-slot',
-    mediaTypes: {
-      banner: {
-        sizes: [[300, 250]]
-      }
-    },
-    bids: [{
-      bidder: 'sovrn',
-      params: {
-        tagid: 'YOUR_SOVRN_TAG_ID'
-      }
-    }]
-  }];
-
-  pbjs.que.push(function() {
-    pbjs.addAdUnits(adUnits);
-
-    pbjs.requestBids({
-      timeout: 1500,
-      bidsBackHandler: function() {
-        console.log("All bids:", pbjs.getBidResponsesForAdUnitCode('ad-slot'));
-
-        var winner = pbjs.getHighestCpmBids('ad-slot')[0];
-        console.log("Winner:", winner);
-
-        if (winner) {
-          pbjs.renderAd(document.getElementById('ad-slot'), winner.adId);
-        } else {
-          document.getElementById('ad-slot').innerHTML =
-            "<strong>No Sovrn bid returned</strong>";
+  <script>
+    var adUnits = [{
+      code: 'ad-slot',     // matches your div id
+      mediaTypes: {
+        banner: {
+          sizes: [[300, 250]]  // Sovrn supports common display sizes
         }
-      }
+      },
+      bids: [{
+        bidder: 'sovrn',
+        params: {
+          tagid: '1290741'  // replace with your Sovrn placement ID
+        }
+      }]
+    }];
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+
+    pbjs.que.push(function() {
+      pbjs.addAdUnits(adUnits);
+
+      pbjs.requestBids({
+        bidsBackHandler: function() {
+          var winners = pbjs.getHighestCpmBids('ad-slot');
+          if (winners && winners.length > 0) {
+            var ad = winners[0];
+            console.log("Winning bid:", ad);
+            // Render the ad into the div
+            pbjs.renderAd(document.getElementById('ad-slot'), ad.adId);
+          } else {
+            document.getElementById('ad-slot').innerHTML = "No Sovrn bid returned.";
+          }
+        }
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
