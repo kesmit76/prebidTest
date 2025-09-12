@@ -1,84 +1,64 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Prebid Sovrn Standalone Debug Page</title>
+  <meta charset="utf-8">
+  <title>Prebid Sovrn Test Page</title>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; padding:16px; }
-    #ad-slot { width:300px; height:250px; border:1px solid #333; margin-top:10px; }
-    #status { margin-bottom:8px; font-weight:600; }
-    #debug { margin-top:12px; white-space:pre-wrap; font-size:12px; color:#222; background:#f6f6f6; padding:8px; border-radius:4px; max-height:300px; overflow:auto; }
-    button { margin-right:8px; }
+    #ad-slot {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #333;
+    }
   </style>
 </head>
 <body>
-  <h2>Prebid Sovrn Standalone Debug1</h2>
-  <div id="status">Status: idle</div>
-  <div>
-    <button id="btnRun">Run Prebid Auction</button>
-    <button id="btnRender">Render Current Winner</button>
-    <button id="btnDump">Dump pbjs.getBidResponses()</button>
-  </div>
+  <h1>Prebid Sovrn Standalone Test</h1>
 
   <div id="ad-slot"></div>
 
-  <div id="debug"></div>
-
-  <!-- IMPORTANT: point this to a Prebid build (local or downloaded) that includes the sovrn adapter -->
-  <!-- Example: download a Prebid custom build and place it next to this file as "prebid.js" -->
+  <!-- Prebid.js must include the Sovrn adapter -->
   <script src="prebid.js"></script>
 
   <script>
-    // Config
     var AD_UNIT_CODE = 'ad-slot';
-    var SOVRN_TAGID = '1290741'; // <-- REPLACE THIS
+    var SOVRN_TAGID = '1290741'; // <-- Replace with your Sovrn tag ID
 
-    // Safety: ensure pbjs exists
     window.pbjs = window.pbjs || {};
     pbjs.que = pbjs.que || [];
-    pbjs.logging = true;
 
-    // UI helpers
-    function setStatus(text) {
-      console.log('STATUS:', text);
-      var s = document.getElementById('status');
-      if (s) s.innerText = 'Status: ' + text;
-      appendDebug('STATUS: ' + text);
-    }
-    function appendDebug(msg) {
-      var d = document.getElementById('debug');
-      if (!d) return;
-      var now = new Date().toISOString().substr(11, 12);
-      d.innerText = now + '  ' + msg + '\n' + d.innerText;
-    }
+    pbjs.que.push(function() {
+      // Define ad unit
+      var adUnits = [{
+        code: AD_UNIT_CODE,
+        mediaTypes: {
+          banner: { sizes: [[300, 250]] }
+        },
+        bids: [{
+          bidder: 'sovrn',
+          params: { tagid: SOVRN_TAGID }
+        }]
+      }];
 
-    // Ad unit definition (match the div id exactly)
-    var adUnits = [{
-      code: AD_UNIT_CODE,
-      mediaTypes: {
-        banner: { sizes: [[300, 250]] }
-      },
-      bids: [{
-        bidder: 'sovrn',
-        params: { tagid: SOVRN_TAGID }
-      }]
-    }];
+      pbjs.addAdUnits(adUnits);
 
-    // Robust render function with fallbacks
-    function safeRenderAd(element, winner) {
-      if (!element) {
-        setStatus('element not found for rendering');
-        return;
-      }
-      if (!winner) {
-        setStatus('no winner provided to safeRenderAd');
-        return;
-      }
-
-      appendDebug('safeRenderAd() called. bidder=' + winner.bidder + ' cpm=' + (winner.cpm || winner.originalCpm));
-
-      // 1) Preferred: pbjs.renderAd(adElement, adId)
-      try {
-        if (window.pbjs && typeof pbjs.renderAd === 'function' && winner.adId) {
-          pbjs.renderAd(element, winner.adId);
-          setStatus('Rendered
+      // Request bids
+      pbjs.requestBids({
+        timeout: 2000,
+        bidsBackHandler: function() {
+          // Get winning bids
+          var winners = pbjs.getHighestCpmBids(AD_UNIT_CODE);
+          if (winners && winners.length > 0) {
+            // Render the creative
+            pbjs.renderAd(document.getElementById(AD_UNIT_CODE), winners[0].adId);
+            console.log('Rendered Sovrn creative:', winners[0]);
+          } else {
+            // No bid
+            document.getElementById(AD_UNIT_CODE).innerHTML = '<em>No Sovrn bid returned</em>';
+            console.log('No winning bid found');
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
