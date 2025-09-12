@@ -1,55 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Prebid Sovrn Test</title>
-  <script async src="https://acdn.adnxs.com/prebid/not-for-prod/1/prebid.js"></script>
+  <meta charset="utf-8" />
+  <title>Prebid Sovrn Standalone Debug Page</title>
   <style>
-    #ad-slot {
-      width: 300px;
-      height: 250px;
-      border: 1px solid #000;
-    }
+    body { font-family: Arial, Helvetica, sans-serif; padding:16px; }
+    #ad-slot { width:300px; height:250px; border:1px solid #333; margin-top:10px; }
+    #status { margin-bottom:8px; font-weight:600; }
+    #debug { margin-top:12px; white-space:pre-wrap; font-size:12px; color:#222; background:#f6f6f6; padding:8px; border-radius:4px; max-height:300px; overflow:auto; }
+    button { margin-right:8px; }
   </style>
 </head>
 <body>
-  <h3>Prebid Sovrn Test (No GAM)3</h3>
+  <h2>Prebid Sovrn Standalone Debug</h2>
+  <div id="status">Status: idle</div>
+  <div>
+    <button id="btnRun">Run Prebid Auction</button>
+    <button id="btnRender">Render Current Winner</button>
+    <button id="btnDump">Dump pbjs.getBidResponses()</button>
+  </div>
+
   <div id="ad-slot"></div>
 
+  <div id="debug"></div>
+
+  <!-- IMPORTANT: point this to a Prebid build (local or downloaded) that includes the sovrn adapter -->
+  <!-- Example: download a Prebid custom build and place it next to this file as "prebid.js" -->
+  <script src="prebid.js"></script>
+
   <script>
+    // Config
+    var AD_UNIT_CODE = 'ad-slot';
+    var SOVRN_TAGID = 'YOUR_SOVRN_TAG_ID'; // <-- REPLACE THIS
+
+    // Safety: ensure pbjs exists
+    window.pbjs = window.pbjs || {};
+    pbjs.que = pbjs.que || [];
+    pbjs.logging = true;
+
+    // UI helpers
+    function setStatus(text) {
+      console.log('STATUS:', text);
+      var s = document.getElementById('status');
+      if (s) s.innerText = 'Status: ' + text;
+      appendDebug('STATUS: ' + text);
+    }
+    function appendDebug(msg) {
+      var d = document.getElementById('debug');
+      if (!d) return;
+      var now = new Date().toISOString().substr(11, 12);
+      d.innerText = now + '  ' + msg + '\n' + d.innerText;
+    }
+
+    // Ad unit definition (match the div id exactly)
     var adUnits = [{
-      code: 'ad-slot',     // matches your div id
+      code: AD_UNIT_CODE,
       mediaTypes: {
-        banner: {
-          sizes: [[300, 250]]  // Sovrn supports common display sizes
-        }
+        banner: { sizes: [[300, 250]] }
       },
       bids: [{
         bidder: 'sovrn',
-        params: {
-          tagid: '1290741'  // replace with your Sovrn placement ID
-        }
+        params: { tagid: SOVRN_TAGID }
       }]
     }];
 
-    var pbjs = pbjs || {};
-    pbjs.que = pbjs.que || [];
+    // Robust render function with fallbacks
+    function safeRenderAd(element, winner) {
+      if (!element) {
+        setStatus('element not found for rendering');
+        return;
+      }
+      if (!winner) {
+        setStatus('no winner provided to safeRenderAd');
+        return;
+      }
 
-   pbjs.que.push(function() {
-  var winners = pbjs.getHighestCpmBids('ad-slot');
-  if (winners.length > 0) {
-    var winner = winners[0];
-    console.log("Rendering winner:", winner);
-    pbjs.renderAd(
-      document.getElementById('ad-slot'),
-      winner.adId
-    );
-  } else {
-    document.getElementById('ad-slot').innerHTML = "<em>No bid</em>";
-  }
-});
+      appendDebug('safeRenderAd() called. bidder=' + winner.bidder + ' cpm=' + (winner.cpm || winner.originalCpm));
 
-     
-  </script>
-</body>
-</html>
+      // 1) Preferred: pbjs.renderAd(adElement, adId)
+      try {
+        if (window.pbjs && typeof pbjs.renderAd === 'function' && winner.adId) {
+          pbjs.renderAd(element, winner.adId);
+          setStatus('Rendered
