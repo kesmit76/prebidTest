@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Magnite Prebid Test</title>
+
+  <script>
+    var PREBID_TIMEOUT = 3000;
+
+    var adUnits = [{
+      code: 'div-gpt-ad-300x250',
+      mediaTypes: {
+        banner: {
+          sizes: [[300, 250]]
+        }
+      },
+      bids: [{
+        bidder: 'magnite',
+        params: {
+          accountId: 28475,
+          siteId: 636475,
+          zoneId: 4136752
+        }
+      }]
+    }];
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+  </script>
+
+  <!-- Prebid.js -->
+  <script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+
+    .ad-container {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f5f5f5;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Magnite Prebid Test</h1>
+
+  <p>
+    Magnite Account: 28475<br>
+    Site: 636475<br>
+    Zone: 4136752<br>
+    Size: 300x250
+  </p>
+
+  <div id="div-gpt-ad-300x250" class="ad-container">
+    Waiting for Magnite...
+  </div>
+
+  <div id="status" class="status">
+    Starting auction...
+  </div>
+
+  <script>
+    pbjs.que.push(function() {
+
+      pbjs.setConfig({
+        debug: true,
+
+        userSync: {
+          iframeEnabled: true
+        }
+      });
+
+      pbjs.addAdUnits(adUnits);
+
+      pbjs.requestBids({
+        bidsBackHandler: function(bids) {
+
+          var bid = bids['div-gpt-ad-300x250'];
+
+          console.log('Prebid bids:', bids);
+
+          if (bid && bid.bids && bid.bids.length > 0) {
+
+            var winningBid = bid.bids[0];
+
+            console.log('Magnite bid:', winningBid);
+
+            document.getElementById('status').innerHTML =
+              'Magnite returned a bid! CPM: $' +
+              winningBid.cpm +
+              ' | Size: ' +
+              winningBid.width +
+              'x' +
+              winningBid.height;
+
+            pbjs.renderAd(
+              document,
+              winningBid.adId
+            );
+
+          } else {
+
+            console.log('No Magnite bid returned.');
+
+            document.getElementById('status').innerHTML =
+              'No bid returned from Magnite.';
+          }
+        },
+
+        timeout: PREBID_TIMEOUT
+      });
+
+    });
+  </script>
+
+</body>
+</html>
