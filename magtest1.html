@@ -3,8 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magnite Prebid Test — Simple</title>
 
-  <title>Magnite Prebid Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      max-width: 700px;
+    }
+    .ad-container {
+      width: 300px;
+      height: 250px;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f0f0f0;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    h2 {
+      margin-top: 30px;
+      font-size: 16px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Magnite Prebid Test — Simple</h1>
+
+  <p>
+    Bidder: magnite<br>
+    Account: 28475<br>
+    Site: 643075<br>
+    Zone: 4159483<br>
+    Size: 300x250
+  </p>
+
+  <div id="div-gpt-ad-300x250" class="ad-container">Waiting for Magnite...</div>
+
+  <div id="status" class="status">Starting auction...</div>
+
+  <h2>Raw bidsBackHandler output</h2>
+  <pre id="output">(waiting for auction to complete)</pre>
+
+  <!-- Prebid.js -->
+  <script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
 
   <script>
     var PREBID_TIMEOUT = 3000;
@@ -20,116 +84,67 @@
         bidder: 'magnite',
         params: {
           accountId: 28475,
-          //accountId: 11128475,
           siteId: 643075,
           zoneId: 4159483
         }
       }]
     }];
 
-    var pbjs = pbjs || {};
+    var pbjs = window.pbjs || {};
     pbjs.que = pbjs.que || [];
-  </script>
 
-  <!-- Prebid.js -->
-  <script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
+    function writeOutput(obj) {
+      document.getElementById('output').textContent = JSON.stringify(obj, null, 2);
     }
 
-    .ad-container {
-      width: 300px;
-      height: 250px;
-      border: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    .status {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f5f5f5;
-      font-family: monospace;
-    }
-  </style>
-</head>
-
-<body>
-
-  <h1>Magnite Prebid Test</h1>
-
-  <p>
-    Magnite Account: 28475<br>
-    Site: 636475<br>
-    Zone: 4136753<br>
-    Size: 300x250<br />
-    test2
-  </p>
-
-  <div id="div-gpt-ad-300x250" class="ad-container">
-    Waiting for Magnite...
-  </div>
-
-  <div id="status" class="status">
-    Starting auction...
-  </div>
-
-  <script>
     pbjs.que.push(function() {
 
       pbjs.setConfig({
-        debug: true,
+        debug: true
+      });
 
-        userSync: {
-          iframeEnabled: true
-        }
+      // Log every raw bid response as it comes in, win or lose
+      pbjs.onEvent('bidResponse', function(bid) {
+        console.log('bidResponse event:', bid);
+      });
+
+      // Log explicit no-bid events (these fire even if bidsBackHandler shows nothing)
+      pbjs.onEvent('noBid', function(bid) {
+        console.log('noBid event:', bid);
+        document.getElementById('status').innerHTML =
+          'No-bid event received from bidder: ' + bid.bidder;
+      });
+
+      // Log any raw auction/bidder errors
+      pbjs.onEvent('bidderError', function(err) {
+        console.log('bidderError event:', err);
       });
 
       pbjs.addAdUnits(adUnits);
 
       pbjs.requestBids({
         bidsBackHandler: function(bids) {
+          console.log('Full bidsBackHandler payload:', bids);
+          writeOutput(bids);
 
-          var bid = bids['div-gpt-ad-300x250'];
+          var slot = bids['div-gpt-ad-300x250'];
 
-          console.log('Prebid bids:', bids);
-
-          if (bid && bid.bids && bid.bids.length > 0) {
-
-            var winningBid = bid.bids[0];
-
-            console.log('Magnite bid:', winningBid);
+          if (slot && slot.bids && slot.bids.length > 0) {
+            var winningBid = slot.bids[0];
+            console.log('Winning bid:', winningBid);
 
             document.getElementById('status').innerHTML =
-              'Magnite returned a bid! CPM: $' +
-              winningBid.cpm +
-              ' | Size: ' +
-              winningBid.width +
-              'x' +
-              winningBid.height;
+              'Bid returned! CPM: $' + winningBid.cpm +
+              ' | Size: ' + winningBid.width + 'x' + winningBid.height;
 
-            pbjs.renderAd(
-              document,
-              winningBid.adId
-            );
-
+            pbjs.renderAd(document, winningBid.adId);
           } else {
-
-            console.log('No Magnite bid returned.');
-
             document.getElementById('status').innerHTML =
-              'No bid returned from Magnite.';
+              'No bid returned from Magnite (auction completed, empty result).';
           }
         },
-
         timeout: PREBID_TIMEOUT
       });
-
     });
   </script>
 
